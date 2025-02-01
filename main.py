@@ -1,11 +1,13 @@
 import asyncio
+
 from src.checkers.best_buy import BestBuyChecker
+from src.checkers.cc_checker import CanadaComputersChecker
 from src.models import ProductFilter
 from rich import print
 
 
 async def main() -> None:
-    checker = BestBuyChecker()
+    checker = CanadaComputersChecker()
     products = await checker.get_products(
         filter=ProductFilter(
             search="nvidia 4070",
