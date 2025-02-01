@@ -1,3 +1,7 @@
+"""
+THIS IS A WIP
+"""
+
 from curl_cffi import requests
 
 resp = requests.get(
