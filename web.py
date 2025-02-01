@@ -19,9 +19,12 @@ async def wait_for(
     timeout_seconds: float,
     wait_seconds: float,
 ) -> bool:
+    if timeout_seconds == -1:
+        print(
+            "Timeout was set to -1. This will run an infinite loop. Manual interruption is required!!!!"
+        )
     while timeout_seconds:
         await asyncio.sleep(wait_seconds)
-        print("retrying")
         result = await func() if inspect.iscoroutinefunction(func) else func()
 
         if result:
@@ -42,6 +45,7 @@ async def wait_for_login(tab: uc.Tab) -> bool:
         return True
 
     async def check_login_btn():
+        print("Not logged in yet. Required.")
         await tab.reload()
         login_btn = await tab.find("//a[@data-automation='sign-in-link']")
         if not login_btn:
@@ -49,6 +53,11 @@ async def wait_for_login(tab: uc.Tab) -> bool:
         return not login_btn
 
     return await wait_for(check_login_btn, 5 * 60, 10)
+
+async def check_add_to_cart_btn(tab: uc.Tab) -> bool:
+    add_to_cart_btn = await tab.find("//button[@data-automation='addToCartButton']")
+    if add_to_cart_btn["disabled"] is None:
+        print("Add to cart disabled, retrying")
 
 
 async def main():
@@ -64,7 +73,6 @@ async def main():
     await random_sleep()
 
     assert await wait_for_login(tab), "You didn't log in on time :("
-    add_to_cart_btn = await tab.find("//button[@data-automation='addToCartButton']")
 
     await browser.cookies.save()
 
