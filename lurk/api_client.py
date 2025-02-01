@@ -2,7 +2,7 @@ from pydantic.dataclasses import dataclass
 from json import JSONDecodeError
 from typing import Self, Any, cast
 from curl_cffi import requests
-from src.settings import get_settings
+from lurk.settings import get_settings
 from collections.abc import Mapping
 
 JsonResponse = dict[str, Any]

@@ -1,5 +1,5 @@
 from typing import Protocol, Self, Any
-from src.models import Product, ProductFilter
+from lurk.models import Product, ProductFilter
 
 
 class Checker(Protocol):

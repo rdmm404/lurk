@@ -3,9 +3,9 @@ from rich import print
 from pydantic import ValidationError
 
 from enum import StrEnum
-from src.models import Product, ProductFilter
-from src.checkers.checker import Checker
-from src.api_client import ApiClient
+from lurk.models import Product, ProductFilter
+from lurk.checkers.checker import Checker
+from lurk.api_client import ApiClient
 
 
 class BestBuyRoutes(StrEnum):

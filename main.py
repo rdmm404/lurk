@@ -1,8 +1,8 @@
 import asyncio
 
-from src.checkers.best_buy import BestBuyChecker
-from src.checkers.cc_checker import CanadaComputersChecker
-from src.models import ProductFilter
+from lurk.checkers.best_buy import BestBuyChecker
+from lurk.checkers.cc_checker import CanadaComputersChecker
+from lurk.models import ProductFilter
 from rich import print
 
 

@@ -1,3 +1,87 @@
+Directory structure:
+└── rdmm123-lurk/
+    ├── README.md
+    ├── main.py
+    ├── pyproject.toml
+    ├── uv.lock
+    ├── .python-version
+    └── lurk/
+        ├── __init__.py
+        ├── api_client.py
+        ├── models.py
+        ├── settings.py
+        └── checkers/
+            ├── __init__.py
+            ├── amazon.py
+            ├── best_buy.py
+            ├── cc_checker.py
+            └── checker.py
+
+
+Files Content:
+
+================================================
+File: README.md
+================================================
+# Lurk
+Lurk is a simple CLI tool that checks product stock across multiple stores. Search by keywords, set filters like price or category, and get real-time availability—all without leaving your terminal.
+
+Built with Python, it leverages asynchronous requests for speed and efficiency. Data fetching is handled via custom store-specific checkers, and results are structured using Pydantic models.
+
+================================================
+File: main.py
+================================================
+import asyncio
+
+from lurk.checkers.best_buy import BestBuyChecker
+from lurk.checkers.cc_checker import CanadaComputersChecker
+from lurk.models import ProductFilter
+from rich import print
+
+
+async def main() -> None:
+    checker = CanadaComputersChecker()
+    products = await checker.get_products(
+        filter=ProductFilter(
+            search="nvidia 4070",
+            categories=["Computers & Tablets", "PC Components"],
+            max_price=1500,
+        )
+    )
+    print(products)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+
+
+================================================
+File: pyproject.toml
+================================================
+[project]
+name = "lurk"
+version = "0.1.0"
+description = "A CLI tool to check product stock across multiple stores."
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "curl-cffi>=0.7.4",
+    "mypy>=1.14.1",
+    "nodriver>=0.39",
+    "pydantic-settings>=2.7.1",
+    "pydantic>=2.10.6",
+    "requests>=2.32.3",
+    "rich>=13.9.4",
+]
+
+[tool.mypy]
+strict = true
+explicit_package_bases = true
+
+
+================================================
+File: uv.lock
+================================================
 version = 1
 requires-python = ">=3.13"
 
@@ -8,6 +92,31 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/ee/67/531ea369ba64dcff5ec9c3402f9f51bf748cec26dde048a2f973a4eea7f5/annotated_types-0.7.0.tar.gz", hash = "sha256:aff07c09a53a08bc8cfccb9c85b05f1aa9a2a6f23728d790723543408344ce89", size = 16081 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/78/b6/6307fbef88d9b5ee7421e68d78a9f162e0da4900bc5f5793f6d3d0e34fb8/annotated_types-0.7.0-py3-none-any.whl", hash = "sha256:1f02e8b43a8fbbc3f3e0d4f0f4bfc8131bcb4eebe8849b8e5c773f3a1c582a53", size = 13643 },
+]
+
+[[package]]
+name = "best-buy-checker"
+version = "0.1.0"
+source = { virtual = "." }
+dependencies = [
+    { name = "curl-cffi" },
+    { name = "mypy" },
+    { name = "nodriver" },
+    { name = "pydantic" },
+    { name = "pydantic-settings" },
+    { name = "requests" },
+    { name = "rich" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "curl-cffi", specifier = ">=0.7.4" },
+    { name = "mypy", specifier = ">=1.14.1" },
+    { name = "nodriver", specifier = ">=0.39" },
+    { name = "pydantic", specifier = ">=2.10.6" },
+    { name = "pydantic-settings", specifier = ">=2.7.1" },
+    { name = "requests", specifier = ">=2.32.3" },
+    { name = "rich", specifier = ">=13.9.4" },
 ]
 
 [[package]]
@@ -104,31 +213,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/f1/70/7703c29685631f5a7590aa73f1f1d3fa9a380e654b86af429e0934a32f7d/idna-3.10.tar.gz", hash = "sha256:12f65c9b470abda6dc35cf8e63cc574b1c52b11df2c86030af0ac09b01b13ea9", size = 190490 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/76/c6/c88e154df9c4e1a2a66ccf0005a88dfb2650c1dffb6f5ce603dfbd452ce3/idna-3.10-py3-none-any.whl", hash = "sha256:946d195a0d259cbba61165e88e65941f16e9b36ea6ddb97f00452bae8b1287d3", size = 70442 },
-]
-
-[[package]]
-name = "lurk"
-version = "0.1.0"
-source = { virtual = "." }
-dependencies = [
-    { name = "curl-cffi" },
-    { name = "mypy" },
-    { name = "nodriver" },
-    { name = "pydantic" },
-    { name = "pydantic-settings" },
-    { name = "requests" },
-    { name = "rich" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "curl-cffi", specifier = ">=0.7.4" },
-    { name = "mypy", specifier = ">=1.14.1" },
-    { name = "nodriver", specifier = ">=0.39" },
-    { name = "pydantic", specifier = ">=2.10.6" },
-    { name = "pydantic-settings", specifier = ">=2.7.1" },
-    { name = "requests", specifier = ">=2.32.3" },
-    { name = "rich", specifier = ">=13.9.4" },
 ]
 
 [[package]]
@@ -378,3 +462,366 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/09/5e/1655cf481e079c1f22d0cabdd4e51733679932718dc23bf2db175f329b76/wrapt-1.17.2-cp313-cp313t-win_amd64.whl", hash = "sha256:eaf675418ed6b3b31c7a989fd007fa7c3be66ce14e5c3b27336383604c9da85c", size = 40750 },
     { url = "https://files.pythonhosted.org/packages/2d/82/f56956041adef78f849db6b289b282e72b55ab8045a75abad81898c28d19/wrapt-1.17.2-py3-none-any.whl", hash = "sha256:b18f2d1533a71f069c7f82d524a52599053d4c7166e9dd374ae2136b7f40f7c8", size = 23594 },
 ]
+
+
+================================================
+File: .python-version
+================================================
+3.13
+
+
+================================================
+File: lurk/api_client.py
+================================================
+from pydantic.dataclasses import dataclass
+from json import JSONDecodeError
+from typing import Self, Any, cast
+from curl_cffi import requests
+from lurk.settings import get_settings
+from collections.abc import Mapping
+
+JsonResponse = dict[str, Any]
+
+
+@dataclass
+class Response:
+    status_code: int
+    json: JsonResponse
+    ok: bool
+    raw: str
+
+
+class ApiClient:
+    def __init__(self, base_url: str):
+        self.base_url = base_url.rstrip("/")
+        self.session = requests.AsyncSession()
+        self._settings = get_settings()
+
+    async def __aenter__(self) -> Self:
+        return self
+
+    async def __aexit__(self, *_: Any) -> None:
+        await self.close()
+
+    async def close(self) -> None:
+        await self.session.close()
+
+    async def _make_request(
+        self,
+        method: requests.session.HttpMethod,
+        route: str,
+        headers: Mapping[str, str] | None = None,
+        params: Mapping[str, str] | None = None,
+        body: Mapping[str, Any] | None = None,
+        cookies: Mapping[str, str] | None = None,
+    ) -> Response:
+        route = f"/{route}" if not route.startswith("/") else route
+        res_headers = self._settings.default_headers
+        print(
+            f"Making request to {self.base_url + route} with {body=} headers={res_headers} {params=} {cookies=}"
+        )
+        if headers:
+            res_headers.update(headers)
+        resp = await self.session.request(
+            method,
+            self.base_url + route,
+            params=cast(dict[str, str], params),
+            headers=res_headers,
+            json=cast(dict[str, str], body),
+            cookies=cast(dict[str, str], cookies),
+        )
+        print(f"Received response with status {resp.status_code}")
+        try:
+            data = resp.json()  # type: ignore
+        except JSONDecodeError:
+            print(f"Invalid json received {resp.text}")
+            return Response(
+                status_code=resp.status_code, ok=resp.ok, json={}, raw=resp.text
+            )
+        print(f"Response body: {resp.text[:500]}...")
+
+        return Response(
+            status_code=resp.status_code, ok=resp.ok, json=data, raw=resp.text
+        )
+
+    async def get(
+        self,
+        route: str,
+        headers: Mapping[str, str] | None = None,
+        params: Mapping[str, Any] | None = None,
+        body: Mapping[str, Any] | None = None,
+        cookies: Mapping[str, str] | None = None,
+    ) -> Response:
+        return await self._make_request("GET", route, headers, params, body, cookies)
+
+    async def post(
+        self,
+        route: str,
+        headers: Mapping[str, str] | None = None,
+        params: Mapping[str, str] | None = None,
+        body: Mapping[str, Any] | None = None,
+        cookies: Mapping[str, str] | None = None,
+    ) -> Response:
+        return await self._make_request("POST", route, headers, params, body, cookies)
+
+
+================================================
+File: lurk/models.py
+================================================
+from pydantic import BaseModel, HttpUrl
+
+
+class Product(BaseModel):
+    sku: str
+    url: HttpUrl
+    in_stock: bool
+    name: str
+    description: str
+    price: float
+
+
+class ProductFilter(BaseModel):
+    search: str
+    min_price: int | None = None
+    max_price: int | None = None
+    in_stock: bool | None = None
+    stores: list[str] | None = None
+    zip_code: str | None = None
+    region: str | None = None
+    language: str | None = None
+    categories: list[str] | None = None
+
+
+================================================
+File: lurk/settings.py
+================================================
+from pydantic_settings import BaseSettings
+from functools import lru_cache
+
+
+class Settings(BaseSettings):
+    default_headers: dict[str, str] = {
+        "Cache-Control": "no-cache",
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/131.0.0.0 Safari/537.36",
+    }
+
+
+@lru_cache()
+def get_settings() -> Settings:
+    return Settings()
+
+
+================================================
+File: lurk/checkers/amazon.py
+================================================
+"""
+THIS IS A WIP
+"""
+
+from curl_cffi import requests
+
+resp = requests.get(
+    "https://www.amazon.ca/s?k=nvidia+5080&i=electronics&rh=n%3A2404990011%2Cn%3A677243011%2Cp_36%3A-150000&dc&qid=1738300499&rnid=12035759011",
+    headers={
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/131.0.0.0 Safari/537.36"
+    },
+)
+
+with open("page.html", "w") as f:
+    f.write(resp.text)
+
+
+================================================
+File: lurk/checkers/best_buy.py
+================================================
+from typing import Self, Any, TypedDict, no_type_check
+from rich import print
+from pydantic import ValidationError
+
+from enum import StrEnum
+from lurk.models import Product, ProductFilter
+from lurk.checkers.checker import Checker
+from lurk.api_client import ApiClient
+
+
+class BestBuyRoutes(StrEnum):
+    SEARCH = "/api/v2/json/search"
+    STOCK = "/ecomm-api/availability/products"
+
+
+class BestBuySearchParams(TypedDict, total=False):
+    currentRegion: str
+    lang: str
+    query: str
+    sortBy: str
+    sortDir: str
+    path: str
+
+
+BestBuyProductsParams = TypedDict(
+    "BestBuyProductsParams",
+    {
+        "accept": str,
+        "accept-language": str,
+        "locations": str,
+        "postalCode": str,
+        "skus": str,
+    },
+    total=False,
+)
+
+
+class BestBuyChecker(Checker):
+    base_url = "https://www.bestbuy.ca"
+
+    def __init__(self) -> None:
+        self.client = ApiClient(base_url=self.base_url)
+
+    async def __aenter__(self) -> Self:
+        return self
+
+    async def __aexit__(self, *_: Any) -> None:
+        await self.client.close()
+
+    async def get_products(self, filter: ProductFilter) -> list[Product]:
+        raw_products = await self._search_products(filter)
+        products: list[Product] = []
+
+        for p in raw_products:
+            try:
+                product = self._parse_product(p)  # type: ignore
+            except ValidationError:
+                pass
+
+            products.append(product)
+
+        stocks = await self._fetch_products([p.sku for p in products], filter)
+
+        for product in products:
+            availability = stocks.get(product.sku)
+            if not availability:
+                print(f"availability not found for product {product.sku}")
+                continue
+            pickup_available = availability.get("pickup", {}).get("purchasable", False)
+            shipping_available = availability.get("shipping", {}).get(
+                "purchasable", False
+            )
+            product.in_stock = pickup_available or shipping_available
+
+        return products
+
+    async def _search_products(self, filter: ProductFilter) -> list[dict[str, Any]]:
+        default_search_params: BestBuySearchParams = {
+            "currentRegion": "ON",
+            "lang": "en-CA",
+            "sortBy": "relevance",
+            "sortDir": "desc",
+        }
+        filter_params: BestBuySearchParams = {"query": filter.search}
+        if filter.region:
+            filter_params["currentRegion"] = filter.region
+        if filter.language:
+            filter_params["lang"] = filter.language
+        if filter.categories:
+            filter_params["path"] = ";".join(f"category:{c}" for c in filter.categories)
+        if filter.min_price or filter.max_price:
+            price_range_str = f";currentPrice:[{filter.min_price or '*'} TO {filter.max_price or '*'}]"
+            filter_params["path"] += price_range_str
+
+        search_resp = await self.client.get(
+            BestBuyRoutes.SEARCH, params=default_search_params | filter_params
+        )
+        products: list[dict[str, Any]] = search_resp.json.get("products", [])
+        return products
+
+    @no_type_check
+    def _parse_product(self, raw_product: dict[str, Any]) -> Product:
+        return Product(
+            sku=raw_product.get("sku"),
+            url=self.base_url + raw_product.get("productUrl"),
+            in_stock=False,
+            name=raw_product.get("name"),
+            description=raw_product.get("shortDescription"),
+            price=raw_product.get("salePrice"),
+        )
+
+    async def _fetch_products(
+        self, skus: list[str], filter: ProductFilter
+    ) -> dict[str, dict[str, Any]]:
+        if not skus:
+            return {}
+        default_params: BestBuyProductsParams = {
+            "accept": "application/vnd.bestbuy.simpleproduct.v1+json",
+            "accept-language": "en-CA",
+        }
+        params: BestBuyProductsParams = {"skus": "|".join(skus)}
+        if filter.stores:
+            params["locations"] = "|".join(filter.stores)
+        if filter.zip_code:
+            params["postalCode"] = filter.zip_code
+
+        resp = await self.client.get(
+            BestBuyRoutes.STOCK, params=default_params | params
+        )
+        stocks = resp.json.get("availabilities", [])
+        stocks_mapping: dict[str, dict[str, Any]] = {}
+        for s in stocks:
+            if not (sku := s.get("sku")):
+                continue
+            stocks_mapping[sku] = s
+        return stocks_mapping
+
+
+================================================
+File: lurk/checkers/cc_checker.py
+================================================
+from typing import Self, Any
+from curl_cffi import requests
+from rich import print
+
+from lurk.checkers.checker import Checker
+from lurk.models import Product, ProductFilter
+from lurk.settings import get_settings
+
+
+class CanadaComputersChecker(Checker):
+    def __init__(self) -> None:
+        self.session = requests.AsyncSession()
+        self._settings = get_settings()
+
+    async def __aenter__(self) -> Self:
+        return self
+
+    async def __aexit__(self, *_: Any) -> None:
+        await self.session.close()
+
+    async def get_products(self, filter: ProductFilter) -> list[Product]:
+        resp = await self.session.get(
+            "https://www.canadacomputers.com/en/search?s=4080",
+            headers=self._settings.default_headers,
+        )
+        with open("page.html", "w") as f:
+            f.write(resp.text)
+        print(resp.text)
+        return []
+
+
+================================================
+File: lurk/checkers/checker.py
+================================================
+from typing import Protocol, Self, Any
+from lurk.models import Product, ProductFilter
+
+
+class Checker(Protocol):
+    async def __aenter__(self) -> Self: ...
+
+    async def __aexit__(self, *_: Any) -> None: ...
+
+    async def get_products(self, filter: ProductFilter) -> list[Product]: ...
+
+

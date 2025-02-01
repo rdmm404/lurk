@@ -2,9 +2,9 @@ from typing import Self, Any
 from curl_cffi import requests
 from rich import print
 
-from src.checkers.checker import Checker
-from src.models import Product, ProductFilter
-from src.settings import get_settings
+from lurk.checkers.checker import Checker
+from lurk.models import Product, ProductFilter
+from lurk.settings import get_settings
 
 
 class CanadaComputersChecker(Checker):
