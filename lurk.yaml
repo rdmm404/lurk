@@ -1,0 +1,17 @@
+global:
+  filters:
+    search: "nvidia 5080"
+
+client:
+  headers:
+    Cache-Control: "no-cache"
+    User-Agent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+
+checkers:
+  best-buy:
+    filters:
+      search: "nvidia 4070"
+      min-price: 1200
+      categories:
+        - "Computers & Tablets"
+        - "PC Components"

@@ -6,6 +6,7 @@ from enum import StrEnum
 from lurk.models import Product, ProductFilter
 from lurk.checkers.checker import Checker
 from lurk.api_client import ApiClient
+from lurk.config import Config
 
 
 class BestBuyRoutes(StrEnum):
@@ -38,8 +39,8 @@ BestBuyProductsParams = TypedDict(
 class BestBuyChecker(Checker):
     base_url = "https://www.bestbuy.ca"
 
-    def __init__(self) -> None:
-        self.client = ApiClient(base_url=self.base_url)
+    def __init__(self, config: Config) -> None:
+        self.client = ApiClient(base_url=self.base_url, config=config.client)
 
     async def __aenter__(self) -> Self:
         return self

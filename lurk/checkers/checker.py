@@ -1,8 +1,11 @@
 from typing import Protocol, Self, Any
 from lurk.models import Product, ProductFilter
+from lurk.config import Config
 
 
 class Checker(Protocol):
+    def __init__(self, config: Config): ...
+
     async def __aenter__(self) -> Self: ...
 
     async def __aexit__(self, *_: Any) -> None: ...
