@@ -9,14 +9,3 @@ class Product(BaseModel):
     description: str
     price: float
 
-
-class ProductFilter(BaseModel):
-    search: str
-    min_price: int | None = None
-    max_price: int | None = None
-    in_stock: bool | None = None
-    stores: list[str] | None = None
-    zip_code: str | None = None
-    region: str | None = None
-    language: str | None = None
-    categories: list[str] | None = None

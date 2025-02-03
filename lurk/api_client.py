@@ -18,8 +18,8 @@ class Response:
 
 
 class ApiClient:
-    def __init__(self, base_url: str, config: ClientConfig):
-        self.base_url = base_url.rstrip("/")
+    def __init__(self, config: ClientConfig):
+        self.base_url: str | None = None
         self.session = requests.AsyncSession()
         self._config = config
 
@@ -32,6 +32,9 @@ class ApiClient:
     async def close(self) -> None:
         await self.session.close()
 
+    def set_base_url(self, url: str) -> None:
+        self.base_url = url.rstrip("/")
+
     async def _make_request(
         self,
         method: requests.session.HttpMethod,
@@ -41,6 +44,7 @@ class ApiClient:
         body: Mapping[str, Any] | None = None,
         cookies: Mapping[str, str] | None = None,
     ) -> Response:
+        assert self.base_url is not None, "Please set the base url"
         route = f"/{route}" if not route.startswith("/") else route
         res_headers = self._config.headers
         if headers:

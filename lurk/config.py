@@ -2,7 +2,6 @@ from pydantic import BaseModel, Field, ConfigDict
 from typing import Annotated
 
 from lurk.misc import snake_to_kebab
-from lurk.models import ProductFilter
 
 
 class BaseConfigModel(BaseModel):
@@ -10,12 +9,21 @@ class BaseConfigModel(BaseModel):
 
 
 
-class FilterConfig(BaseConfigModel, ProductFilter): ...
+class FilterConfig(BaseConfigModel):
+    min_price: int | None = None
+    max_price: int | None = None
+    in_stock: bool | None = None
+    stores: list[str] | None = None
+    zip_code: str | None = None
+    region: str | None = None
+    language: str | None = None
+    categories: list[str] | None = None
 
 
 class GlobalConfig(BaseConfigModel):
     """Global search filters that apply to all checkers unless overridden."""
 
+    search: Annotated[list[str], Field(min_length=1)]
     filters: Annotated[FilterConfig, Field(default_factory=FilterConfig)]
 
 
@@ -23,7 +31,8 @@ class CheckerConfig(BaseConfigModel):
     """Configuration for each individual checker."""
 
     enabled: bool = True
-    filters: FilterConfig | None = None
+    search: Annotated[list[str], Field(min_length=1)]
+    filters: Annotated[FilterConfig, Field(default_factory=FilterConfig)]
 
 
 class ClientConfig(BaseConfigModel):

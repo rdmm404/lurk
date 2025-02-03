@@ -1,6 +1,6 @@
 global:
-  filters:
-    search: "nvidia 5080"
+  search:
+    - "nvidia 5080"
 
 client:
   headers:
@@ -9,9 +9,13 @@ client:
 
 checkers:
   best-buy:
+    # TODO: maybe it makes more sense to have different filters for each search?
+    search:
+      - "nvidia 4070"
+      - "nvidia 5080"
     filters:
-      search: "nvidia 4070"
-      min-price: 1200
+      min-price: 500
+      max-price: 1500
       categories:
         - "Computers & Tablets"
         - "PC Components"

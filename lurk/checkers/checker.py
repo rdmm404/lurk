@@ -1,13 +1,10 @@
-from typing import Protocol, Self, Any
-from lurk.models import Product, ProductFilter
-from lurk.config import Config
+from typing import Protocol
+from lurk.models import Product
+from lurk.api_client import ApiClient
+from lurk.config import CheckerConfig
 
 
 class Checker(Protocol):
-    def __init__(self, config: Config): ...
+    def __init__(self, config: CheckerConfig, api_client: ApiClient): ...
 
-    async def __aenter__(self) -> Self: ...
-
-    async def __aexit__(self, *_: Any) -> None: ...
-
-    async def get_products(self, filter: ProductFilter) -> list[Product]: ...
+    async def get_products(self) -> list[Product]: ...

@@ -4,12 +4,14 @@ import yaml
 
 from pathlib import Path
 from typing import Annotated
-from pydantic import ValidationError, BaseModel
+from pydantic import ValidationError
+from dataclasses import dataclass
 from rich import print
 
 from lurk.config import Config, CheckerConfig
 from lurk.checkers import best_buy, checker
 from lurk.models import Product
+from lurk.api_client import ApiClient
 
 app = typer.Typer(no_args_is_help=True)
 
@@ -17,8 +19,11 @@ AVAILABLE_CHECKERS: dict[str, type[checker.Checker]] = {
     "best-buy": best_buy.BestBuyChecker,
 }
 
-class AppState(BaseModel):
+
+@dataclass
+class AppState:
     config: Config
+    api_client: ApiClient
 
 
 def load_config(path: Path) -> Config:
@@ -34,7 +39,7 @@ def load_config(path: Path) -> Config:
         return config
 
 
-async def run_checkers(config: Config) -> None:
+async def run_checkers(config: Config, api_client: ApiClient) -> None:
     """Run the enabled checkers with merged global parameters."""
     tasks: list[asyncio.Task[list[Product]]] = []
 
@@ -42,11 +47,9 @@ async def run_checkers(config: Config) -> None:
         if c in config.checkers:
             continue
 
-        config.checkers[c] = CheckerConfig(filters=config.global_config.filters)
-
-    async def get_products(checker: checker.Checker, checker_config: CheckerConfig):
-        async with checker:
-            return await checker_instance.get_products(checker_config.filters)
+        config.checkers[c] = CheckerConfig(
+            search=config.global_config.search, filters=config.global_config.filters
+        )
 
     async with asyncio.TaskGroup() as tg:
         for checker_name, checker_config in config.checkers.items():
@@ -61,8 +64,8 @@ async def run_checkers(config: Config) -> None:
             if not checker_config.filters:
                 checker_config.filters = config.global_config.filters
 
-            checker_instance = checker_cls(config)
-            task = tg.create_task(get_products(checker_instance, checker_config))
+            checker_instance = checker_cls(checker_config, api_client)
+            task = tg.create_task(checker_instance.get_products())
             tasks.append(task)
 
     for task in tasks:
@@ -73,7 +76,8 @@ async def run_checkers(config: Config) -> None:
 def run(ctx: typer.Context) -> None:
     """Run the product checkers using the specified config."""
     state: AppState = ctx.obj
-    asyncio.run(run_checkers(state.config))
+    asyncio.run(run_checkers(state.config, state.api_client))
+
 
 @app.callback()
 def callback(
@@ -94,7 +98,9 @@ def callback(
     ] = Path("lurk.yaml"),
 ) -> None:
     cfg = load_config(config)
-    ctx.obj = AppState(config=cfg)
+    api_client = ApiClient(cfg.client)  # TODO: figure out where to close this
+    ctx.obj = AppState(config=cfg, api_client=api_client)
+
 
 if __name__ == "__main__":
     app()
