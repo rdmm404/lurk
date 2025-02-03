@@ -5,6 +5,7 @@ from curl_cffi import requests
 from lurk.config import ClientConfig
 from collections.abc import Mapping
 
+from rich import print
 JsonResponse = dict[str, Any]
 
 
@@ -42,11 +43,11 @@ class ApiClient:
     ) -> Response:
         route = f"/{route}" if not route.startswith("/") else route
         res_headers = self._config.headers
+        if headers:
+            res_headers.update(headers)
         print(
             f"Making request to {self.base_url + route} with {body=} headers={res_headers} {params=} {cookies=}"
         )
-        if headers:
-            res_headers.update(headers)
         resp = await self.session.request(
             method,
             self.base_url + route,

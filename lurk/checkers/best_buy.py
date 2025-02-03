@@ -81,17 +81,34 @@ class BestBuyChecker(Checker):
             "lang": "en-CA",
             "sortBy": "relevance",
             "sortDir": "desc",
+            "include": "facets, redirects",
+            # "isPLP": True,
+            # "categoryId": "",
+            # "page": 1,
+            # "pageSize": 24,
+            # "hasConsent": True,
+            # "contextId": "",
+            # "token": "0704351726c71900c5ce6c67cc0100004b1f1c00il0vtu4thkhi8jh",
         }
         filter_params: BestBuySearchParams = {"query": filter.search}
         if filter.region:
             filter_params["currentRegion"] = filter.region
         if filter.language:
             filter_params["lang"] = filter.language
+
+        filter_params["path"] = ""
+
         if filter.categories:
-            filter_params["path"] = ";".join(f"category:{c}" for c in filter.categories)
+            filter_params["path"] += (
+                ";".join(f"category:{c}" for c in filter.categories) + ";"
+            )
         if filter.min_price or filter.max_price:
-            price_range_str = f";currentPrice:[{filter.min_price or '*'} TO {filter.max_price or '*'}]"
+            price_range_str = (
+                f"currentPrice:[{filter.min_price or '*'} TO {filter.max_price or '*'}]"
+            )
             filter_params["path"] += price_range_str
+
+        filter_params["path"] = filter_params["path"].rstrip(";")
 
         search_resp = await self.client.get(
             BestBuyRoutes.SEARCH, params=default_search_params | filter_params

@@ -5,41 +5,37 @@ from lurk.misc import snake_to_kebab
 from lurk.models import ProductFilter
 
 
-class KebabCaseAliasedModel(BaseModel):
-    model_config = ConfigDict(alias_generator=snake_to_kebab)
+class BaseConfigModel(BaseModel):
+    model_config = ConfigDict(alias_generator=snake_to_kebab, populate_by_name=True)
 
 
-class FilterConfig(KebabCaseAliasedModel, ProductFilter): ...
+
+class FilterConfig(BaseConfigModel, ProductFilter): ...
 
 
-class GlobalConfig(KebabCaseAliasedModel):
+class GlobalConfig(BaseConfigModel):
     """Global search filters that apply to all checkers unless overridden."""
 
     filters: Annotated[FilterConfig, Field(default_factory=FilterConfig)]
 
 
-class CheckerConfig(KebabCaseAliasedModel):
+class CheckerConfig(BaseConfigModel):
     """Configuration for each individual checker."""
 
     enabled: bool = True
     filters: FilterConfig | None = None
 
 
-class ClientConfig(KebabCaseAliasedModel):
+class ClientConfig(BaseConfigModel):
     """HTTP client settings."""
 
     random_useragent: bool = False  # TODO
-    headers: dict[str, str] = {
-        "Cache-Control": "no-cache",
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/131.0.0.0 Safari/537.36",
-    }
+    headers: dict[str, str] = {}
 
 
-class Config(KebabCaseAliasedModel):
+class Config(BaseConfigModel):
     """Main configuration model."""
 
     global_config: Annotated[GlobalConfig, Field(alias="global")]
     checkers: dict[str, CheckerConfig] = {}
-    client: ClientConfig
+    client: Annotated[ClientConfig, Field(default_factory=ClientConfig)]

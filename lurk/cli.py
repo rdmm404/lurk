@@ -44,28 +44,29 @@ async def run_checkers(config: Config) -> None:
 
         config.checkers[c] = CheckerConfig(filters=config.global_config.filters)
 
-    for checker_name, checker_config in config.checkers.items():
-        if not checker_config.enabled:
-            print(f"Skipping disabled checker: {checker_name}")
-            continue
-
-        checker_cls = AVAILABLE_CHECKERS.get(checker_name)
-        if not checker_cls:
-            raise typer.BadParameter(f"Checker does not exist: {checker_name}")
-
-        if not checker_config.filters:
-            checker_config.filters = config.global_config.filters
-
-        checker = checker_cls(config)
+    async def get_products(checker: checker.Checker, checker_config: CheckerConfig):
         async with checker:
-            task: asyncio.Task[list[Product]] = asyncio.create_task(
-                checker.get_products(checker_config.filters)
-            )
+            return await checker_instance.get_products(checker_config.filters)
+
+    async with asyncio.TaskGroup() as tg:
+        for checker_name, checker_config in config.checkers.items():
+            if not checker_config.enabled:
+                print(f"Skipping disabled checker: {checker_name}")
+                continue
+
+            checker_cls = AVAILABLE_CHECKERS.get(checker_name)
+            if not checker_cls:
+                raise typer.BadParameter(f"Checker does not exist: {checker_name}")
+
+            if not checker_config.filters:
+                checker_config.filters = config.global_config.filters
+
+            checker_instance = checker_cls(config)
+            task = tg.create_task(get_products(checker_instance, checker_config))
             tasks.append(task)
 
-    results: list[list[Product]] = await asyncio.gather(*tasks)
-    for result in results:
-        print(result)
+    for task in tasks:
+        print(task.result())
 
 
 @app.command()
