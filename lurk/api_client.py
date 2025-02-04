@@ -62,7 +62,7 @@ class ApiClient:
         )
         print(f"Received response with status {resp.status_code}")
         try:
-            data = resp.json()  # type: ignore
+            data = resp.json()
         except JSONDecodeError:
             print(f"Invalid json received {resp.text}")
             return Response(

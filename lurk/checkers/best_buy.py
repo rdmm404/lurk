@@ -1,4 +1,4 @@
-from typing import Self, Any, TypedDict, no_type_check
+from typing import Any, TypedDict, no_type_check
 from rich import print
 from pydantic import ValidationError
 
@@ -6,7 +6,7 @@ from enum import StrEnum
 from lurk.models import Product
 from lurk.checkers.checker import Checker
 from lurk.api_client import ApiClient
-from lurk.config import CheckerConfig, FilterConfig
+from lurk.config import SearchFilters
 
 
 class BestBuyRoutes(StrEnum):
@@ -40,33 +40,28 @@ BestBuyProductsParams = TypedDict(
 class BestBuyChecker(Checker):
     base_url = "https://www.bestbuy.ca"
 
-    def __init__(self, config: CheckerConfig, api_client: ApiClient) -> None:
+    def __init__(self, api_client: ApiClient) -> None:
         self.client = api_client
         self.client.set_base_url(self.base_url)
-        self.config = config
 
-    async def __aenter__(self) -> Self:
-        return self
-
-    async def __aexit__(self, *_: Any) -> None:
-        await self.client.close()
-
-    async def get_products(self) -> list[Product]:
-        filter = self.config.filters
-
+    async def get_products(
+        self, search: str, filters: SearchFilters | None = None
+    ) -> list[Product]:
+        if not filters:
+            filters = SearchFilters()
         products: list[Product] = []
-        for search in self.config.search:
-            raw_products = await self._search_products(search, filter)
+        raw_products = await self._search_products(search, filters)
 
-            for p in raw_products:
-                try:
-                    product = self._parse_product(p)  # type: ignore
-                except ValidationError:
-                    pass
+        for p in raw_products:
+            try:
+                product = self._parse_product(p)  # type: ignore
+            except ValidationError as e:
+                print(f"Couldn't parse product {p}. Error: {e}")
+                continue
 
-                products.append(product)
+            products.append(product)
 
-        stocks = await self._fetch_products([p.sku for p in products], filter)
+        stocks = await self._fetch_products([p.sku for p in products], filters)
 
         for product in products:
             availability = stocks.get(product.sku)
@@ -82,14 +77,14 @@ class BestBuyChecker(Checker):
         return products
 
     async def _search_products(
-        self, search: str, filters: FilterConfig
+        self, search: str, filters: SearchFilters
     ) -> list[dict[str, Any]]:
         default_search_params: BestBuySearchParams = {
-            "currentRegion": "ON",
             "lang": "en-CA",
             "sortBy": "relevance",
             "sortDir": "desc",
             "include": "facets, redirects",
+            # "currentRegion": "ON",
             # "isPLP": True,
             # "categoryId": "",
             # "page": 1,
@@ -99,10 +94,6 @@ class BestBuyChecker(Checker):
             # "token": "0704351726c71900c5ce6c67cc0100004b1f1c00il0vtu4thkhi8jh",
         }
         filter_params: BestBuySearchParams = {"query": search}
-        if filters.region:
-            filter_params["currentRegion"] = filters.region
-        if filters.language:
-            filter_params["lang"] = filters.language
 
         filter_params["path"] = ""
 
@@ -134,7 +125,7 @@ class BestBuyChecker(Checker):
         )
 
     async def _fetch_products(
-        self, skus: list[str], filters: FilterConfig
+        self, skus: list[str], filters: SearchFilters
     ) -> dict[str, dict[str, Any]]:
         if not skus:
             return {}

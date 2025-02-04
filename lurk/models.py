@@ -8,4 +8,3 @@ class Product(BaseModel):
     name: str
     description: str
     price: float
-

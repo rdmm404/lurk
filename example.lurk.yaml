@@ -32,7 +32,7 @@ checkers:
             - 456
             - 789
           # we can also override stuff in global search
-          query: "nvidia 5080 founders edition"
+          min-price: 800
       # to run a search just for this vendor
       another-search:
         query: "foo"
@@ -42,6 +42,7 @@ checkers:
   # to not run a specific checker:
   amazon:
     enabled: false
+
 client:
   headers:
     Cache-Control: "no-cache"

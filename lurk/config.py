@@ -1,5 +1,5 @@
-from pydantic import BaseModel, Field, ConfigDict
-from typing import Annotated
+from pydantic import BaseModel, Field, ConfigDict, model_validator
+from typing import Annotated, Literal, Self
 
 from lurk.misc import snake_to_kebab
 
@@ -7,32 +7,36 @@ from lurk.misc import snake_to_kebab
 class BaseConfigModel(BaseModel):
     model_config = ConfigDict(alias_generator=snake_to_kebab, populate_by_name=True)
 
+# TODO: Separate model-specific filters
+class SearchFilters(BaseConfigModel):
+    model_config = ConfigDict(coerce_numbers_to_str=True)
 
-
-class FilterConfig(BaseConfigModel):
     min_price: int | None = None
     max_price: int | None = None
     in_stock: bool | None = None
     stores: list[str] | None = None
     zip_code: str | None = None
-    region: str | None = None
-    language: str | None = None
     categories: list[str] | None = None
 
 
-class GlobalConfig(BaseConfigModel):
+class SearchConfig(BaseConfigModel):
     """Global search filters that apply to all checkers unless overridden."""
 
-    search: Annotated[list[str], Field(min_length=1)]
-    filters: Annotated[FilterConfig, Field(default_factory=FilterConfig)]
+    query: str
+    filters: SearchFilters | None = None
+    notify: Literal["availability", "deal"] = "availability"  # TODO
+    enabled: bool = True
+
+
+class CheckerSearchConfig(SearchConfig):
+    query: str = ""
 
 
 class CheckerConfig(BaseConfigModel):
     """Configuration for each individual checker."""
 
     enabled: bool = True
-    search: Annotated[list[str], Field(min_length=1)]
-    filters: Annotated[FilterConfig, Field(default_factory=FilterConfig)]
+    search: dict[str, CheckerSearchConfig] = {}
 
 
 class ClientConfig(BaseConfigModel):
@@ -45,6 +49,23 @@ class ClientConfig(BaseConfigModel):
 class Config(BaseConfigModel):
     """Main configuration model."""
 
-    global_config: Annotated[GlobalConfig, Field(alias="global")]
+    search: Annotated[dict[str, SearchConfig], Field(min_length=1)]
     checkers: dict[str, CheckerConfig] = {}
     client: Annotated[ClientConfig, Field(default_factory=ClientConfig)]
+
+    @model_validator(mode="after")
+    def validate_checkers_search(self) -> Self:
+        for checker_name, checker in self.checkers.items():
+            for search_id, search_config in checker.search.items():
+                if not checker.enabled:
+                    continue
+
+                global_search = self.search.get(search_id)
+
+                if not global_search and not search_config.query:
+                    raise ValueError(
+                        f"Query is required for search '{search_id}' in checker '{checker_name}',"
+                        " since this search is not in the global 'search' config."
+                    )
+
+        return self

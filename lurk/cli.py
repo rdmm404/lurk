@@ -3,12 +3,12 @@ import typer
 import yaml
 
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Any
 from pydantic import ValidationError
 from dataclasses import dataclass
 from rich import print
 
-from lurk.config import Config, CheckerConfig
+from lurk.config import Config, CheckerConfig, SearchConfig
 from lurk.checkers import best_buy, checker
 from lurk.models import Product
 from lurk.api_client import ApiClient
@@ -47,13 +47,11 @@ async def run_checkers(config: Config, api_client: ApiClient) -> None:
         if c in config.checkers:
             continue
 
-        config.checkers[c] = CheckerConfig(
-            search=config.global_config.search, filters=config.global_config.filters
-        )
+        config.checkers[c] = CheckerConfig()
 
     async with asyncio.TaskGroup() as tg:
-        for checker_name, checker_config in config.checkers.items():
-            if not checker_config.enabled:
+        for checker_name, checker_cfg in config.checkers.items():
+            if not checker_cfg.enabled:
                 print(f"Skipping disabled checker: {checker_name}")
                 continue
 
@@ -61,12 +59,38 @@ async def run_checkers(config: Config, api_client: ApiClient) -> None:
             if not checker_cls:
                 raise typer.BadParameter(f"Checker does not exist: {checker_name}")
 
-            if not checker_config.filters:
-                checker_config.filters = config.global_config.filters
+            checker_instance = checker_cls(api_client)
+            merged_search = config.search | checker_cfg.search
+            for search_id, search_cfg in merged_search.items():
+                if not search_cfg.enabled:
+                    print(
+                        f"Skipping disabled search: {search_id} in checker: {checker_name}"
+                    )
+                    continue
 
-            checker_instance = checker_cls(checker_config, api_client)
-            task = tg.create_task(checker_instance.get_products())
-            tasks.append(task)
+                if search_id in config.search:
+                    global_search_cfg = config.search[search_id]
+                    global_search_dict = global_search_cfg.model_dump()
+                    current_search_dict = search_cfg.model_dump(
+                        exclude={"enabled"}, exclude_unset=True, exclude_defaults=True
+                    )
+
+                    filters_merge: dict[str, Any] = global_search_dict["filters"]
+                    filters_merge.update(current_search_dict.get("filters", {}))
+
+                    search_merge = global_search_dict | current_search_dict
+                    search_merge["filters"] = filters_merge
+
+                    merged_config = SearchConfig(**search_merge)
+                else:
+                    merged_config = search_cfg
+
+                task = tg.create_task(
+                    checker_instance.get_products(
+                        merged_config.query, merged_config.filters
+                    )
+                )
+                tasks.append(task)
 
     for task in tasks:
         print(task.result())
@@ -78,6 +102,11 @@ def run(ctx: typer.Context) -> None:
     state: AppState = ctx.obj
     asyncio.run(run_checkers(state.config, state.api_client))
 
+@app.command()
+def validate(ctx: typer.Context) -> None:
+    state: AppState = ctx.obj
+    print("Your config is valid!")
+    print(state.config)
 
 @app.callback()
 def callback(
