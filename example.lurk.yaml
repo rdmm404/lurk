@@ -5,28 +5,44 @@ search:
       min-price: 500
       max-price: 1500
       zip-code: M6K 1Y5
-    notify: deal | stock | whatever else # stock by default
+    notify: availability # can also be 'deal'. 'availability' by default
   nvidia-5090:
     query: "nvidia 5090"
     filters:
       min-price: 500
       max-price: 1500
       zip-code: M6K 1Y5
+
+# will run all checkers by default
+checkers:
+  best-buy:
+    search:
+      # to disable this search for this specific vendor
+      nvidia-5080: # this should match the pre-existing search
+        enabled: false
+      nvidia-5090:
+        filters:
+          # these are vendor-specific, so we don't want them in global search
+          # everything else is inherited from global search
+          categories:
+            - "Computers & Tablets"
+            - "PC Components"
+          stores:
+            - 123
+            - 456
+            - 789
+          # we can also override stuff in global search
+          query: "nvidia 5080 founders edition"
+      # to run a search just for this vendor
+      another-search:
+        query: "foo"
+        filters:
+          min-price: 123
+        notify: deal
+  # to not run a specific checker:
+  amazon:
+    enabled: false
 client:
   headers:
     Cache-Control: "no-cache"
     User-Agent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
-
-checkers:
-  best-buy:
-    search:
-      nvidia-5080:
-        enabled: false
-      nvidia-5090:
-        categories:
-          - "Computers & Tablets"
-          - "PC Components"
-        stores:
-          - 123
-          - 456
-          - 789
