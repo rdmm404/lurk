@@ -1,0 +1,32 @@
+search:
+  nvidia-5080:
+    query: "nvidia 5080"
+    filters:
+      min-price: 500
+      max-price: 1500
+      zip-code: M6K 1Y5
+    notify: deal | stock | whatever else # stock by default
+  nvidia-5090:
+    query: "nvidia 5090"
+    filters:
+      min-price: 500
+      max-price: 1500
+      zip-code: M6K 1Y5
+client:
+  headers:
+    Cache-Control: "no-cache"
+    User-Agent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+
+checkers:
+  best-buy:
+    search:
+      nvidia-5080:
+        enabled: false
+      nvidia-5090:
+        categories:
+          - "Computers & Tablets"
+          - "PC Components"
+        stores:
+          - 123
+          - 456
+          - 789
