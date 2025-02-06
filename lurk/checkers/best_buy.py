@@ -41,8 +41,7 @@ class BestBuyChecker(Checker):
     base_url = "https://www.bestbuy.ca"
 
     def __init__(self, api_client: ApiClient) -> None:
-        self.client = api_client
-        self.client.set_base_url(self.base_url)
+        self.client = api_client.set_base_url(self.base_url)
 
     async def get_products(
         self, search: str, filters: SearchFilters | None = None

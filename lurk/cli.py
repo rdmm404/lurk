@@ -23,7 +23,6 @@ AVAILABLE_CHECKERS: dict[str, type[checker.Checker]] = {
 @dataclass
 class AppState:
     config: Config
-    api_client: ApiClient
 
 
 def load_config(path: Path) -> Config:
@@ -39,7 +38,7 @@ def load_config(path: Path) -> Config:
         return config
 
 
-async def run_checkers(config: Config, api_client: ApiClient) -> None:
+async def run_checkers(config: Config) -> None:
     """Run the enabled checkers with merged global parameters."""
     tasks: list[asyncio.Task[list[Product]]] = []
 
@@ -49,6 +48,7 @@ async def run_checkers(config: Config, api_client: ApiClient) -> None:
 
         config.checkers[c] = CheckerConfig()
 
+    api_clients: dict[str, ApiClient] = {}
     async with asyncio.TaskGroup() as tg:
         for checker_name, checker_cfg in config.checkers.items():
             if not checker_cfg.enabled:
@@ -59,7 +59,10 @@ async def run_checkers(config: Config, api_client: ApiClient) -> None:
             if not checker_cls:
                 raise typer.BadParameter(f"Checker does not exist: {checker_name}")
 
+            api_client = ApiClient(config.client)
             checker_instance = checker_cls(api_client)
+            api_clients[checker_name] = api_client
+
             merged_search = config.search | checker_cfg.search
             for search_id, search_cfg in merged_search.items():
                 if not search_cfg.enabled:
@@ -72,7 +75,9 @@ async def run_checkers(config: Config, api_client: ApiClient) -> None:
                     global_search_cfg = config.search[search_id]
                     global_search_dict = global_search_cfg.model_dump()
                     current_search_dict = search_cfg.model_dump(
-                        exclude={"enabled"}, exclude_unset=True, exclude_defaults=True
+                        exclude={"enabled"},
+                        exclude_unset=True,
+                        exclude_defaults=True,
                     )
 
                     filters_merge: dict[str, Any] = global_search_dict["filters"]
@@ -95,12 +100,14 @@ async def run_checkers(config: Config, api_client: ApiClient) -> None:
     for task in tasks:
         print(task.result())
 
+    for client in api_clients.values():
+        await client.close()
 
 @app.command()
 def run(ctx: typer.Context) -> None:
     """Run the product checkers using the specified config."""
     state: AppState = ctx.obj
-    asyncio.run(run_checkers(state.config, state.api_client))
+    asyncio.run(run_checkers(state.config))
 
 @app.command()
 def validate(ctx: typer.Context) -> None:
@@ -127,8 +134,7 @@ def callback(
     ] = Path("lurk.yaml"),
 ) -> None:
     cfg = load_config(config)
-    api_client = ApiClient(cfg.client)  # TODO: figure out where to close this
-    ctx.obj = AppState(config=cfg, api_client=api_client)
+    ctx.obj = AppState(config=cfg)
 
 
 if __name__ == "__main__":
