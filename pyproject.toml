@@ -2,6 +2,9 @@
 name = "lurk"
 version = "0.1.0"
 description = "A CLI tool to check product stock across multiple stores."
+authors = [
+    { name="Robert Martinez", email="rdmm404@gmail.com" }
+]
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
@@ -15,6 +18,15 @@ dependencies = [
     "pyyaml>=6.0.2",
     "types-pyyaml>=6.0.12.20241230",
 ]
+license = "MIT"
+license-files = ["LICEN[CS]E*"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/rdmm123/lurk"
 
 [build-system]
 requires = ["hatchling"]
@@ -26,3 +38,5 @@ lurk = "lurk.cli:app"
 [tool.mypy]
 strict = true
 explicit_package_bases = true
+
+#[tool.hatch.build.]
