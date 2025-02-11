@@ -1,5 +1,5 @@
 [project]
-name = "lurk"
+name = "lurk-cli"
 version = "0.1.0"
 description = "A CLI tool to check product stock across multiple stores."
 authors = [
@@ -23,6 +23,10 @@ license-files = ["LICEN[CS]E*"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
+    "License :: OSI Approved :: MIT License",
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Topic :: Utilities",
 ]
 
 [project.urls]
@@ -32,11 +36,16 @@ Homepage = "https://github.com/rdmm123/lurk"
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+[tool.hatch.build]
+only-include = ["lurk"]
+exclude = [
+    "lurk/checkers/*_wip.py",
+    ".yaml"
+]
+
 [project.scripts]
 lurk = "lurk.cli:app"
 
 [tool.mypy]
 strict = true
 explicit_package_bases = true
-
-#[tool.hatch.build.]
