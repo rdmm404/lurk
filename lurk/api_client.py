@@ -1,3 +1,5 @@
+import asyncio
+
 from pydantic.dataclasses import dataclass
 from json import JSONDecodeError
 from typing import Self, Any, cast
@@ -6,6 +8,7 @@ from lurk.config import ClientConfig
 from collections.abc import Mapping
 
 from rich import print
+
 JsonResponse = dict[str, Any]
 
 
@@ -32,8 +35,9 @@ class ApiClient:
     async def close(self) -> None:
         await self.session.close()
 
-    def set_base_url(self, url: str) -> None:
+    def set_base_url(self, url: str) -> Self:
         self.base_url = url.rstrip("/")
+        return self
 
     async def _make_request(
         self,
@@ -70,6 +74,8 @@ class ApiClient:
             )
         print(f"Response body: {resp.text[:500]}...")
 
+        # TODO: replace this dumb sleep with a proper rate limiting method like a request queue
+        await asyncio.sleep(1)
         return Response(
             status_code=resp.status_code, ok=resp.ok, json=data, raw=resp.text
         )
