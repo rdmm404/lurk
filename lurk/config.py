@@ -1,5 +1,7 @@
-from pydantic import BaseModel, Field, ConfigDict, model_validator
+import yaml
+from pydantic import BaseModel, Field, ConfigDict, model_validator, ValidationError
 from typing import Annotated, Literal, Self
+from pathlib import Path
 
 from lurk.misc import snake_to_kebab
 
@@ -69,3 +71,13 @@ class Config(BaseConfigModel):
                     )
 
         return self
+
+def parse_config(path: Path) -> Config:
+    """Load and validate configuration from YAML."""
+    with open(path, "r", encoding="utf-8") as file:
+        try:
+            config_data = yaml.safe_load(file) or {}
+            config = Config(**config_data)
+        except ValidationError as e:
+            raise ValueError(f"Your configuration is not valid. Here is the error:\n{e}")
+        return config
