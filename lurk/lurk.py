@@ -1,4 +1,5 @@
 import asyncio
+import itertools
 
 from typing import Any
 from rich import print
@@ -7,18 +8,17 @@ from lurk.config import Config, CheckerConfig, SearchConfig
 from lurk.checkers import best_buy, checker
 from lurk.models import Product
 from lurk.api_client import ApiClient
-
+from lurk.notifiers.telegram import TelegramNotifier
 
 class Lurk:
-    AVAILABLE_CHECKERS: dict[str, type[checker.Checker]] = {
-        "best-buy": best_buy.BestBuyChecker,
-    }
-
     def __init__(self, config: Config):
         self.config = config
 
+        self.AVAILABLE_CHECKERS: dict[str, type[checker.Checker]] = {
+            "best-buy": best_buy.BestBuyChecker,
+        }
+
     async def run(self) -> None:
-        """Run the enabled checkers with merged global parameters."""
         tasks: list[asyncio.Task[list[Product]]] = []
 
         for c in self.AVAILABLE_CHECKERS:
@@ -72,12 +72,8 @@ class Lurk:
                     )
                     tasks.append(task)
 
-        for task in tasks:
-            print(task.result())
-
         for client in api_clients.values():
             await client.close()
 
-    async def notify(self, products: list[Product]) -> None:
-        # TODO
-        pass
+        found_products = itertools.chain.from_iterable(task.result() for task in tasks)
+        await TelegramNotifier().notify(found_products)
