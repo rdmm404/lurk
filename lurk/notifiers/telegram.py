@@ -44,7 +44,7 @@ class TelegramNotifier:
     async def notify(self, products: Iterable[Product]) -> None:
         assert self.api_token and self.chat_id
 
-        if not products:
+        if not any(products):
             print("No products to notify about.")
             return
 

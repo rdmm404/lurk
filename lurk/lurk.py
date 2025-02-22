@@ -76,4 +76,5 @@ class Lurk:
             await client.close()
 
         found_products = itertools.chain.from_iterable(task.result() for task in tasks)
-        await TelegramNotifier().notify(found_products)
+        print(f"{list(found_products)=}")
+        await TelegramNotifier().notify(p for p in found_products if p.in_stock)
