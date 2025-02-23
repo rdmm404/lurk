@@ -242,12 +242,11 @@ wheels = [
 
 [[package]]
 name = "lurk-cli"
-version = "0.1.0"
+version = "0.1.5"
 source = { editable = "." }
 dependencies = [
     { name = "aiogram" },
     { name = "curl-cffi" },
-    { name = "mypy" },
     { name = "nodriver" },
     { name = "pydantic" },
     { name = "pyyaml" },
@@ -257,11 +256,15 @@ dependencies = [
     { name = "types-pyyaml" },
 ]
 
+[package.dev-dependencies]
+dev = [
+    { name = "mypy" },
+]
+
 [package.metadata]
 requires-dist = [
     { name = "aiogram", specifier = ">=3.18.0" },
     { name = "curl-cffi", specifier = ">=0.7.4" },
-    { name = "mypy", specifier = ">=1.14.1" },
     { name = "nodriver", specifier = ">=0.39" },
     { name = "pydantic", specifier = ">=2.10.6" },
     { name = "pyyaml", specifier = ">=6.0.2" },
@@ -270,6 +273,9 @@ requires-dist = [
     { name = "typer", specifier = ">=0.15.1" },
     { name = "types-pyyaml", specifier = ">=6.0.12.20241230" },
 ]
+
+[package.metadata.requires-dev]
+dev = [{ name = "mypy", specifier = ">=1.15.0" }]
 
 [[package]]
 name = "magic-filter"

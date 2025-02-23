@@ -41,7 +41,7 @@ class TelegramNotifier:
         product_list = "\n".join(f'<a href="{p.url}">{p.name}</a> for ${p.price}' for p in products)
         return PRODUCTS_TEMPLATE.format(product_list=product_list)
 
-    async def notify(self, products: Iterable[Product]) -> None:
+    async def notify(self, products: list[Product]) -> None:
         assert self.api_token and self.chat_id
 
         if not any(products):
