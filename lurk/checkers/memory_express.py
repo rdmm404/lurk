@@ -2,7 +2,7 @@ import traceback
 from typing import cast, Any
 from bs4 import BeautifulSoup, Tag, ResultSet
 from pydantic import HttpUrl
-from lurk.http_client import HttpClient
+from lurk.http_client import HttpClient, TextResponse
 from lurk.checkers.checker import Checker
 from lurk.config import SearchFilters
 from lurk.models import Product
@@ -31,13 +31,24 @@ class MemoryExpressChecker(Checker):
             filters = SearchFilters()
         self.validate_filters(filters)
 
+        resp = await self._fetch_products(search, filters)
+        products = await self._parse_products(resp)
+        return await self._filter_products(products, filters)
+
+    async def _fetch_products(self, search: str, filters: SearchFilters) -> TextResponse:
         category = cast(list[str], filters.categories)[0]
 
         query_params = {"Search": search}
+
         if filters.in_stock:
             query_params["InventoryType"] = "InStock"
-        resp = await self.http_client.get(f"/Category/{category}", params=query_params)
 
+        if filters.stores:
+            query_params["Inventory"] = filters.stores[0]
+
+        return await self.http_client.get(f"/Category/{category}", params=query_params)
+
+    async def _parse_products(self, resp: TextResponse) -> list[Product]:
         soup = BeautifulSoup(resp.content, "html.parser")
         products = []
 
@@ -119,6 +130,19 @@ class MemoryExpressChecker(Checker):
             except Exception as e:
                 print(f"Error parsing product: {e}")
                 traceback.print_exc()
-                raise
-
+                continue
         return products
+
+    async def _filter_products(
+        self, products: list[Product], filters: SearchFilters
+    ) -> list[Product]:
+        filtered_products = []
+
+        for product in products:
+            if filters.min_price and product.price < filters.min_price:
+                continue
+            if filters.max_price and product.price > filters.max_price:
+                continue
+            filtered_products.append(product)
+
+        return filtered_products
