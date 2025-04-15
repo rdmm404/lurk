@@ -5,7 +5,7 @@ from pydantic import ValidationError
 from enum import StrEnum
 from lurk.models import Product
 from lurk.checkers.checker import Checker
-from lurk.api_client import ApiClient
+from lurk.http_client import HttpClient
 from lurk.config import SearchFilters
 
 
@@ -40,8 +40,8 @@ BestBuyProductsParams = TypedDict(
 class BestBuyChecker(Checker):
     base_url = "https://www.bestbuy.ca"
 
-    def __init__(self, api_client: ApiClient) -> None:
-        self.client = api_client.set_base_url(self.base_url)
+    def __init__(self, http_client: HttpClient) -> None:
+        self.client = http_client.set_base_url(self.base_url)
 
     async def get_products(
         self, search: str, filters: SearchFilters | None = None
@@ -107,9 +107,11 @@ class BestBuyChecker(Checker):
         filter_params["path"] = filter_params["path"].rstrip(";")
 
         search_resp = await self.client.get(
-            BestBuyRoutes.SEARCH, params=default_search_params | filter_params
+            BestBuyRoutes.SEARCH,
+            params=default_search_params | filter_params,
+            expect_json=True,
         )
-        products: list[dict[str, Any]] = search_resp.json.get("products", [])
+        products: list[dict[str, Any]] = search_resp.content.get("products", [])
         return products
 
     @no_type_check
@@ -139,9 +141,9 @@ class BestBuyChecker(Checker):
             params["postalCode"] = filters.zip_code
 
         resp = await self.client.get(
-            BestBuyRoutes.STOCK, params=default_params | params
+            BestBuyRoutes.STOCK, params=default_params | params, expect_json=True
         )
-        stocks = resp.json.get("availabilities", [])
+        stocks = resp.content.get("availabilities", [])
         stocks_mapping: dict[str, dict[str, Any]] = {}
         for s in stocks:
             if not (sku := s.get("sku")):

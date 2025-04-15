@@ -7,7 +7,7 @@ from rich import print
 from lurk.config import Config, CheckerConfig, SearchConfig
 from lurk.checkers import best_buy, checker
 from lurk.models import Product
-from lurk.api_client import ApiClient
+from lurk.http_client import HttpClient
 from lurk.notifiers.telegram import TelegramNotifier
 
 class Lurk:
@@ -27,7 +27,7 @@ class Lurk:
 
             self.config.checkers[c] = CheckerConfig()
 
-        api_clients: dict[str, ApiClient] = {}
+        http_clients: dict[str, HttpClient] = {}
         async with asyncio.TaskGroup() as tg:
             for checker_name, checker_cfg in self.config.checkers.items():
                 if not checker_cfg.enabled:
@@ -38,9 +38,9 @@ class Lurk:
                 if not checker_cls:
                     raise ValueError(f"Checker does not exist: {checker_name}")
 
-                api_client = ApiClient(self.config.client)
-                checker_instance = checker_cls(api_client)
-                api_clients[checker_name] = api_client
+                http_client = HttpClient(self.config.client)
+                checker_instance = checker_cls(http_client)
+                http_clients[checker_name] = http_client
 
                 merged_search = self.config.search | checker_cfg.search
                 for search_id, search_cfg in merged_search.items():
@@ -72,7 +72,7 @@ class Lurk:
                     )
                     tasks.append(task)
 
-        for client in api_clients.values():
+        for client in http_clients.values():
             await client.close()
 
         found_products = list(itertools.chain.from_iterable(task.result() for task in tasks))
