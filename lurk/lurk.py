@@ -5,7 +5,7 @@ from typing import Any
 from rich import print
 
 from lurk.config import Config, CheckerConfig, SearchConfig
-from lurk.checkers import best_buy, checker
+from lurk.checkers import best_buy, checker, memory_express
 from lurk.models import Product
 from lurk.http_client import HttpClient
 from lurk.notifiers.telegram import TelegramNotifier
@@ -16,6 +16,7 @@ class Lurk:
 
         self.AVAILABLE_CHECKERS: dict[str, type[checker.Checker]] = {
             "best-buy": best_buy.BestBuyChecker,
+            "memory-express": memory_express.MemoryExpressChecker,
         }
 
     async def run(self) -> None:

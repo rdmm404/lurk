@@ -35,7 +35,7 @@ Response = Union[JsonApiResponse, TextResponse]
 class HttpClient:
     def __init__(self, config: ClientConfig):
         self.base_url: str | None = None
-        self.session = requests.AsyncSession()
+        self.session = requests.AsyncSession(impersonate="chrome")
         self._config = config
 
     async def __aenter__(self) -> Self:
